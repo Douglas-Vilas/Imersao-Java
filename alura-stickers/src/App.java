@@ -1,34 +1,39 @@
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.security.Key;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import javax.swing.text.html.HTMLEditorKit.Parser;
 
 public class App {
 
     public static void main(String[] args) throws Exception {
-       // Fazer uma conexão HTTP e buscar os tops 250 filmes
-        String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
-        URI endereco = URI.create(url);
-        var client = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(endereco).GET().build();
-        HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        String body = response.body();
 
-        // Pegar só os dados que interessam (titulo, poster, classififcação) 
-        var parser = new JsonParser();
-        List<Map<String, String>> listaDeFilmes = parser.parse(body);
+        // Fazer uma conexão HTTP e buscar os tops 250 filmes
+ 
+        //String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
+        //ExtratorDeConteudo extrator = new ExtratorDeConteudoIMDB();
+
+        String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&start_date=2022-06-12&end_date=2022-06-14";
+        ExtratorDeConteudo extrator = new ExtratorDeConteudoDaNasa();
         
+        var http = new ClienteHttp();
+        String json = http.buscaDados(url); //json é o body da classe ClienteHttp        
+
         // Exibir e manipular os dados
-        for (Map<String,String> filme : listaDeFilmes) {
-            System.out.println(filme.get("title"));            
-            System.out.println(filme.get("image"));            
-            System.out.println(filme.get("imDbRating"));    
-            System.out.println();        
+        List<Conteudo> conteudos = extrator.extraiConteudos(json);
+
+        var geradora = new GeradoraDeFigurinhas();
+
+        for (int i = 0; i < 3; i++) {
+
+            Conteudo conteudo = conteudos.get(i);
+
+            InputStream inputStream = new URL(conteudo.getUrlImagem()).openStream();
+            String nomeArquivo = "C:\\Users\\dougl\\OneDrive\\Documentos\\MeusProjetos\\Imersao-Java\\alura-stickers\\saida\\" + conteudo.getTitulo().replace(":", "-") + ".png";
+
+           geradora.cria(inputStream, nomeArquivo);
+
+            System.out.println(conteudo.getTitulo());
+            System.out.println();
         }
     }
 }
